@@ -1013,6 +1013,28 @@
   </div>
 </div>
 
+<!-- ========== LINE文章 モーダル ========== -->
+<div id="line-modal" class="modal-overlay">
+  <div class="modal animate-in">
+    <div class="modal-header">
+      <div class="modal-title">📱 LINE文章を作成</div>
+      <button class="btn-icon" onclick="closeLineModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px; color:var(--gray-500); margin-bottom:12px;">
+        下の文章をコピーしてLINEに貼り付けてください
+      </p>
+      <textarea id="line-message-text" class="form-control" rows="13" readonly
+        style="font-size:14px; line-height:1.8; background:var(--gray-50); resize:none;"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeLineModal()">閉じる</button>
+      <button class="btn" id="line-copy-btn" onclick="copyLineMessage()"
+        style="background:#06c755; color:white;">📋 コピー</button>
+    </div>
+  </div>
+</div>
+
 <!-- ========== 動作確認 実施モーダル ========== -->
 <div id="check-run-modal" class="modal-overlay">
   <div class="modal animate-in">
@@ -2190,9 +2212,12 @@ function renderEvents() {
             ` : ''}
             ${ev.note ? `<div style="margin-top:8px; font-size:13px; color:var(--gray-500);">📝 ${esc(ev.note)}</div>` : ''}
           </div>
-          <div class="list-item-actions">
-            <button class="btn-icon" onclick="openEventModal('${ev.id}')" title="編集">✏️</button>
-            <button class="btn-icon danger" onclick="removeEvent('${ev.id}')" title="削除">🗑️</button>
+          <div class="list-item-actions" style="flex-direction:column; align-items:flex-end; gap:6px;">
+            <button class="btn btn-sm" style="background:#06c755;color:white;font-size:13px;" onclick="generateLineMessage('${ev.id}')">📱 LINE</button>
+            <div style="display:flex;gap:4px;">
+              <button class="btn-icon" onclick="openEventModal('${ev.id}')" title="編集">✏️</button>
+              <button class="btn-icon danger" onclick="removeEvent('${ev.id}')" title="削除">🗑️</button>
+            </div>
           </div>
         </div>
       </div>
@@ -2678,6 +2703,63 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
     }
   });
 });
+
+// ============================================================
+// LINE文章生成
+// ============================================================
+
+function generateLineMessage(id) {
+  const ev = events.find(e => e.id === id);
+  if (!ev) return;
+
+  const staffNames = (ev.staff || []).map(sid => {
+    const s = staff.find(x => x.id === sid);
+    return s ? s.name : '';
+  }).filter(Boolean);
+
+  const equipNames = (ev.equipment || []).map(eid => {
+    const cat = equipmentCategoryDefs.find(c => c.id === eid) || EQUIPMENT_CATEGORIES.find(c => c.id === eid);
+    return cat ? `${cat.icon}${cat.name}` : '';
+  }).filter(Boolean);
+
+  const d = new Date(ev.date + 'T00:00:00');
+  const days = ['日','月','火','水','木','金','土'];
+  const dateStr = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;
+
+  let msg = '【体力測定のお知らせ】\n\n';
+  msg += `📅 日時：${dateStr}\n`;
+  if (ev.gather) msg += `🚩 集合：${ev.gather}\n`;
+  if (ev.start || ev.end) msg += `🕐 時間：${ev.start || ''}〜${ev.end || ''}\n`;
+  msg += `📍 場所：${ev.location}\n`;
+  if (ev.staffCount) msg += `👥 スタッフ：${ev.staffCount}人必要\n`;
+  if (staffNames.length > 0) msg += `\n担当：${staffNames.join('、')}\n`;
+  if (equipNames.length > 0) msg += `道具：${equipNames.join('、')}\n`;
+  if (ev.note) msg += `\n📝 ${ev.note}\n`;
+  msg += '\nよろしくお願いします！';
+
+  document.getElementById('line-message-text').value = msg;
+  document.getElementById('line-copy-btn').textContent = '📋 コピー';
+  document.getElementById('line-modal').classList.add('active');
+}
+
+function closeLineModal() {
+  document.getElementById('line-modal').classList.remove('active');
+}
+
+function copyLineMessage() {
+  const text = document.getElementById('line-message-text').value;
+  const btn = document.getElementById('line-copy-btn');
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✅ コピーしました！';
+    setTimeout(() => { btn.textContent = '📋 コピー'; }, 2500);
+  }).catch(() => {
+    const ta = document.getElementById('line-message-text');
+    ta.select();
+    document.execCommand('copy');
+    btn.textContent = '✅ コピーしました！';
+    setTimeout(() => { btn.textContent = '📋 コピー'; }, 2500);
+  });
+}
 
 // ============================================================
 // 初期化
