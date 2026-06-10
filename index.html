@@ -2731,7 +2731,6 @@ function generateLineMessage(id) {
   if (ev.gather) msg += `🚩 集合：${ev.gather}\n`;
   if (ev.start || ev.end) msg += `🕐 時間：${ev.start || ''}〜${ev.end || ''}\n`;
   msg += `📍 場所：${ev.location}\n`;
-  if (ev.staffCount) msg += `👥 スタッフ：${ev.staffCount}人必要\n`;
   msg += '\nよろしくお願いします！';
 
   document.getElementById('line-message-text').value = msg;
