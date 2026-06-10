@@ -2219,7 +2219,7 @@ function renderEvents() {
                 ${equipNames.map(n => `<span class="badge badge-gray">${n}</span>`).join('')}
               </div>
             ` : ''}
-            ${ev.note ? `<div style="margin-top:8px; font-size:13px; color:var(--gray-500);">📝 ${esc(ev.note)}</div>` : ''}
+            ${ev.note ? `<div style="margin-top:8px; font-size:13px; color:var(--gray-500); white-space:pre-wrap;">📝 ${esc(ev.note)}</div>` : ''}
           </div>
           <div class="list-item-actions" style="flex-direction:column; align-items:flex-end; gap:6px;">
             <button class="btn btn-sm" style="background:#06c755;color:white;font-size:13px;" onclick="generateLineMessage('${ev.id}')">📱 LINE</button>
