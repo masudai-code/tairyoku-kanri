@@ -1,0 +1,2689 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>体力測定 道具管理</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #2563eb;
+    --primary-light: #dbeafe;
+    --primary-dark: #1d4ed8;
+    --success: #16a34a;
+    --success-light: #dcfce7;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --danger: #dc2626;
+    --danger-light: #fee2e2;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic UI', sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ヘッダー */
+  .app-header {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 16px 20px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+
+  .app-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* タブ */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 1px;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    flex-shrink: 0;
+    padding: 10px 16px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-500);
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab-btn:hover { color: var(--primary); }
+  .tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 600;
+  }
+
+  /* メインコンテンツ */
+  .main { padding: 20px; max-width: 800px; margin: 0 auto; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* カード */
+  .card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-900);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ボタン */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--primary-dark); }
+
+  .btn-success {
+    background: var(--success);
+    color: white;
+  }
+  .btn-success:hover { background: #15803d; }
+
+  .btn-danger {
+    background: var(--danger);
+    color: white;
+  }
+  .btn-danger:hover { background: #b91c1c; }
+
+  .btn-outline {
+    background: white;
+    border: 1px solid var(--gray-300);
+    color: var(--gray-700);
+  }
+  .btn-outline:hover { background: var(--gray-50); }
+
+  .btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .btn-icon {
+    padding: 8px;
+    border-radius: 8px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--gray-500);
+    transition: all 0.15s;
+    font-size: 16px;
+  }
+  .btn-icon:hover { background: var(--gray-100); color: var(--gray-900); }
+  .btn-icon.danger:hover { background: var(--danger-light); color: var(--danger); }
+
+  /* フォーム */
+  .form-group { margin-bottom: 16px; }
+
+  .form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-700);
+    margin-bottom: 6px;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    font-size: 15px;
+    color: var(--gray-900);
+    transition: border-color 0.15s;
+    background: white;
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .form-row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* バッジ */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .badge-blue { background: var(--primary-light); color: var(--primary); }
+  .badge-green { background: var(--success-light); color: var(--success); }
+  .badge-yellow { background: var(--warning-light); color: var(--warning); }
+  .badge-red { background: var(--danger-light); color: var(--danger); }
+  .badge-gray { background: var(--gray-100); color: var(--gray-500); }
+
+  /* リストアイテム */
+  .list-item {
+    padding: 14px 16px;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background: white;
+    transition: box-shadow 0.15s;
+  }
+  .list-item:hover { box-shadow: var(--shadow-md); }
+
+  .list-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .list-item-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 4px;
+  }
+
+  .list-item-meta {
+    font-size: 13px;
+    color: var(--gray-500);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  .list-item-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  /* チェックリスト */
+  .checklist { margin-top: 12px; }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border: 1px solid transparent;
+  }
+  .check-item:hover { background: var(--gray-50); }
+  .check-item.checked {
+    background: var(--success-light);
+    border-color: #bbf7d0;
+  }
+
+  .check-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--success);
+  }
+
+  .check-item-label {
+    font-size: 14px;
+    color: var(--gray-700);
+    flex: 1;
+  }
+  .check-item.checked .check-item-label {
+    color: var(--success);
+  }
+
+  /* モーダル */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .modal-overlay.active { display: flex; align-items: flex-start; justify-content: center; }
+
+  .modal {
+    background: white;
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 520px;
+    margin: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  .modal-header {
+    padding: 20px 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--gray-900);
+  }
+
+  .modal-body { padding: 20px; }
+
+  .modal-footer {
+    padding: 0 20px 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  /* 空状態 */
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--gray-500);
+  }
+  .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state-text { font-size: 15px; margin-bottom: 16px; }
+
+  /* 道具セクション */
+  .equip-category {
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .equip-category-header {
+    background: var(--gray-50);
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--gray-700);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .equip-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-top: 1px solid var(--gray-100);
+    gap: 8px;
+  }
+
+  .equip-item-name {
+    font-size: 14px;
+    color: var(--gray-700);
+    flex: 1;
+    min-width: 0;
+  }
+
+  .equip-add-row {
+    padding: 8px 12px;
+    border-top: 1px solid var(--gray-100);
+    display: flex;
+    gap: 8px;
+  }
+
+  .equip-location {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .equip-location input {
+    padding: 6px 10px;
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    font-size: 13px;
+    width: 140px;
+    color: var(--gray-700);
+  }
+  .equip-location input:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  /* スタッフタグ */
+  .staff-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .staff-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .staff-tag-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--primary);
+    padding: 0;
+    font-size: 14px;
+    line-height: 1;
+    opacity: 0.7;
+  }
+  .staff-tag-remove:hover { opacity: 1; }
+
+  /* チェックリスト進捗バー */
+  .progress-bar {
+    height: 6px;
+    background: var(--gray-200);
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--success);
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+
+  .progress-text {
+    font-size: 12px;
+    color: var(--gray-500);
+    margin-top: 4px;
+  }
+
+  /* アニメーション */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-in { animation: fadeIn 0.2s ease-out; }
+
+  /* レスポンシブ */
+  @media (max-width: 480px) {
+    .form-row { grid-template-columns: 1fr; }
+    .form-row-3 { grid-template-columns: 1fr; }
+    .main { padding: 12px; }
+    .card { padding: 14px; }
+    .equip-location input { width: 110px; }
+  }
+
+  /* 区切り線 */
+  .divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 16px 0;
+  }
+
+  /* 選択ボックス（スタッフ選択） */
+  .staff-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .staff-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .staff-checkbox-label:hover { border-color: var(--primary); color: var(--primary); }
+  .staff-checkbox-label input { display: none; }
+  .staff-checkbox-label.selected {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  /* 道具選択 */
+  .equip-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .equip-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .equip-checkbox-label:hover { border-color: var(--primary); }
+  .equip-checkbox-label input { display: none; }
+  .equip-checkbox-label.selected {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 500;
+  }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+  }
+
+  /* 完了ステータス表示 */
+  .check-status-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .check-status-circle.done { background: var(--success-light); color: var(--success); }
+  .check-status-circle.pending { background: var(--warning-light); color: var(--warning); }
+
+  /* 在庫管理 */
+  .filter-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--gray-300);
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--gray-600);
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  .stock-counter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 5px 10px;
+  }
+  .stock-btn {
+    width: 32px; height: 32px;
+    border: none;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+    transition: all 0.1s;
+    line-height: 1;
+  }
+  .stock-btn:active { transform: scale(0.92); }
+
+  .inv-photo-box {
+    width: 80px; height: 80px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--gray-100);
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--gray-200);
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+  }
+  .inv-photo-box:hover { box-shadow: var(--shadow-md); }
+
+  .stock-alert-red   { color: var(--danger); font-weight: 600; }
+  .stock-alert-yellow { color: var(--warning); font-weight: 600; }
+  .stock-ok          { color: var(--success); }
+</style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-title">
+    💪 体力測定 道具管理
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showPage('schedule')">
+      📅 測定スケジュール
+    </button>
+    <button class="tab-btn" onclick="showPage('equipment')">
+      🔧 道具管理
+    </button>
+    <button class="tab-btn" onclick="showPage('check')">
+      ✅ 動作確認
+    </button>
+    <button class="tab-btn" onclick="showPage('inventory')">
+      📦 在庫管理
+    </button>
+    <button class="tab-btn" onclick="showPage('staff')">
+      👤 スタッフ
+    </button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ========== 測定スケジュール ========== -->
+  <div id="page-schedule" class="page active">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📅 測定スケジュール一覧</div>
+        <button class="btn btn-primary btn-sm" onclick="openEventModal()">
+          ＋ 追加
+        </button>
+      </div>
+      <div id="event-list"></div>
+    </div>
+  </div>
+
+  <!-- ========== 道具管理 ========== -->
+  <div id="page-equipment" class="page">
+
+    <!-- 保管場所マスター -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📍 保管場所の管理</div>
+      </div>
+      <p style="font-size:13px; color:var(--gray-500); margin-bottom:14px;">場所を追加・編集・削除できます</p>
+      <div id="location-options-list"></div>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <input type="text" id="new-location-name" class="form-control" placeholder="新しい場所を入力（例：さざんぴあ）" onkeydown="if(event.key==='Enter')addLocationOption()">
+        <button class="btn btn-primary" style="white-space:nowrap;" onclick="addLocationOption()">追加</button>
+      </div>
+    </div>
+
+    <!-- 機材ユニット管理 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🖥️ 機材ユニット管理</div>
+        <button class="btn btn-primary btn-sm" onclick="openUnitModal()">＋ 追加</button>
+      </div>
+      <p style="font-size:13px; color:var(--gray-500); margin-bottom:12px;">
+        ioi①②、血管年齢①（本体＋パソコン①ペア）など台数・組み合わせを写真付きで管理
+      </p>
+      <div id="unit-filter" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; overflow-x:auto; padding-bottom:4px;"></div>
+      <div id="unit-list"></div>
+    </div>
+
+    <!-- 道具リスト -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🔧 道具・保管場所管理</div>
+        <button class="btn btn-outline btn-sm" onclick="saveLocations()">
+          💾 保存
+        </button>
+      </div>
+      <p style="font-size:13px; color:var(--gray-500); margin-bottom:16px;">
+        各道具の保管場所を選択してください
+      </p>
+      <div id="equipment-list"></div>
+    </div>
+
+  </div>
+
+  <!-- ========== 在庫管理 ========== -->
+  <div id="page-inventory" class="page">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📦 在庫管理</div>
+        <button class="btn btn-primary btn-sm" onclick="openInventoryModal()">＋ 追加</button>
+      </div>
+      <div id="inventory-filter" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; overflow-x:auto; padding-bottom:4px;"></div>
+      <div id="inventory-list"></div>
+    </div>
+  </div>
+
+  <!-- ========== 動作確認チェック ========== -->
+  <div id="page-check" class="page">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">✅ 動作確認チェック一覧</div>
+        <button class="btn btn-primary btn-sm" onclick="openCheckModal()">
+          ＋ 追加
+        </button>
+      </div>
+      <div id="check-list"></div>
+    </div>
+  </div>
+
+  <!-- ========== スタッフ管理 ========== -->
+  <div id="page-staff" class="page">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">👤 スタッフ管理</div>
+      </div>
+      <div class="form-row" style="margin-bottom:16px;">
+        <input type="text" id="new-staff-name" class="form-control" placeholder="スタッフ名を入力">
+        <button class="btn btn-primary" onclick="addStaff()">追加</button>
+      </div>
+      <div id="staff-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========== 測定イベント モーダル ========== -->
+<div id="event-modal" class="modal-overlay">
+  <div class="modal animate-in">
+    <div class="modal-header">
+      <div class="modal-title" id="event-modal-title">測定を追加</div>
+      <button class="btn-icon" onclick="closeEventModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">日付 <span style="color:var(--danger)">*</span></label>
+        <input type="date" id="ev-date" class="form-control">
+      </div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label">集合時間</label>
+          <input type="time" id="ev-gather" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">開始時刻</label>
+          <input type="time" id="ev-start" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">終了時刻</label>
+          <input type="time" id="ev-end" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">場所 <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="ev-location" class="form-control" placeholder="例：○○センター 1F 体育館">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">スタッフ人数</label>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input type="number" id="ev-staff-count" class="form-control" min="1" max="99" placeholder="例：3">
+            <span style="font-size:14px; color:var(--gray-500); white-space:nowrap;">人</span>
+          </div>
+        </div>
+        <div class="form-group"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">担当スタッフ</label>
+        <div class="staff-selector" id="ev-staff-selector"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">使用する道具</label>
+        <div class="equip-selector" id="ev-equip-selector"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">メモ</label>
+        <textarea id="ev-note" class="form-control" rows="2" placeholder="備考・注意事項など"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeEventModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveEvent()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 機材ユニット モーダル ========== -->
+<div id="unit-modal" class="modal-overlay">
+  <div class="modal animate-in">
+    <div class="modal-header">
+      <div class="modal-title" id="unit-modal-title">機材ユニットを追加</div>
+      <button class="btn-icon" onclick="closeUnitModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- メイン写真 -->
+      <div style="text-align:center; margin-bottom:16px;">
+        <div class="inv-photo-box" style="width:120px;height:120px;margin:0 auto;border:2px dashed var(--gray-300);"
+             id="unit-photo-preview" onclick="document.getElementById('unit-photo-input').click()">
+          <span style="font-size:36px;color:var(--gray-300);">📷</span>
+        </div>
+        <input type="file" id="unit-photo-input" accept="image/*" capture="environment" style="display:none" onchange="handleUnitPhoto(this)">
+        <p style="font-size:12px;color:var(--gray-500);margin-top:6px;">ユニット全体の写真（タップして変更）</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ユニット名 <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="unit-name" class="form-control" placeholder="例：ioi①、血管年齢②">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">カテゴリ</label>
+          <select id="unit-category" class="form-control">
+            <option value="ioi">🩺 ioi一式</option>
+            <option value="vascular">🫀 血管年齢</option>
+            <option value="bone">🦴 骨密度</option>
+            <option value="result">📊 結果説明</option>
+            <option value="misc">📦 その他</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">保管場所</label>
+          <select id="unit-location" class="form-control">
+            <option value="">（未設定）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🔗 ペア・組み合わせ情報</label>
+        <input type="text" id="unit-pair" class="form-control" placeholder="例：パソコン①とセット、プリンター②と使用">
+      </div>
+
+      <!-- 構成部品の写真 -->
+      <div class="form-group">
+        <label class="form-label">構成部品の写真</label>
+        <p style="font-size:12px;color:var(--gray-500);margin-bottom:8px;">本体・パソコンなど各部品の写真と名前を追加できます</p>
+        <div id="unit-sub-items"></div>
+        <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addSubItem()">＋ 部品を追加</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">メモ</label>
+        <textarea id="unit-note" class="form-control" rows="2" placeholder="備考・注意事項など"></textarea>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeUnitModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveUnit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 在庫管理 モーダル ========== -->
+<div id="inventory-modal" class="modal-overlay">
+  <div class="modal animate-in">
+    <div class="modal-header">
+      <div class="modal-title" id="inv-modal-title">在庫品を追加</div>
+      <button class="btn-icon" onclick="closeInventoryModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- 写真 -->
+      <div style="text-align:center; margin-bottom:16px;">
+        <div class="inv-photo-box" style="width:120px; height:120px; margin:0 auto; border:2px dashed var(--gray-300);" id="inv-photo-preview" onclick="document.getElementById('inv-photo-input').click()">
+          <span style="font-size:36px; color:var(--gray-300);">📷</span>
+        </div>
+        <input type="file" id="inv-photo-input" accept="image/*" capture="environment" style="display:none" onchange="handleInventoryPhoto(this)">
+        <p style="font-size:12px; color:var(--gray-500); margin-top:6px;">タップして写真を追加</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">品目名 <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="inv-name" class="form-control" placeholder="例：用紙、インク">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">カテゴリ</label>
+        <div style="display:flex; gap:8px;">
+          <select id="inv-category" class="form-control" style="flex:1;" onchange="toggleCustomCategory(this.value)">
+            <option value="ioi">🩺 ioi一式</option>
+            <option value="vascular">🫀 血管年齢</option>
+            <option value="bone">🦴 骨密度</option>
+            <option value="result">📊 結果説明</option>
+            <option value="misc">📦 その他備品</option>
+            <option value="custom">✏️ カスタム（自由入力）</option>
+          </select>
+        </div>
+        <input type="text" id="inv-custom-category" class="form-control" placeholder="カテゴリ名を入力" style="display:none; margin-top:8px;">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">型番・商品名</label>
+        <input type="text" id="inv-model" class="form-control" placeholder="例：A4コピー用紙 500枚入り">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">現在の在庫数</label>
+          <input type="number" id="inv-stock" class="form-control" min="0" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">単位</label>
+          <select id="inv-unit" class="form-control">
+            <option value="箱">箱</option>
+            <option value="本">本</option>
+            <option value="枚">枚</option>
+            <option value="冊">冊</option>
+            <option value="個">個</option>
+            <option value="セット">セット</option>
+            <option value="ロール">ロール</option>
+            <option value="パック">パック</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">⚠️ アラート在庫数（これ以下で警告）</label>
+        <input type="number" id="inv-min-stock" class="form-control" min="0" placeholder="例：2">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">メモ・発注先</label>
+        <textarea id="inv-note" class="form-control" rows="2" placeholder="発注先、URL、備考など"></textarea>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeInventoryModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveInventoryItem()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 動作確認 モーダル ========== -->
+<div id="check-modal" class="modal-overlay">
+  <div class="modal animate-in">
+    <div class="modal-header">
+      <div class="modal-title" id="check-modal-title">動作確認を追加</div>
+      <button class="btn-icon" onclick="closeCheckModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">関連する測定</label>
+        <select id="ck-event" class="form-control">
+          <option value="">（測定を選択）</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">確認日 <span style="color:var(--danger)">*</span></label>
+        <input type="date" id="ck-date" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">確認場所 <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="ck-location" class="form-control" placeholder="例：倉庫・事務所など">
+      </div>
+      <div class="form-group">
+        <label class="form-label">確認担当スタッフ</label>
+        <div class="staff-selector" id="ck-staff-selector"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">確認対象の道具</label>
+        <div class="equip-selector" id="ck-equip-selector"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeCheckModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveCheck()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 動作確認 実施モーダル ========== -->
+<div id="check-run-modal" class="modal-overlay">
+  <div class="modal animate-in">
+    <div class="modal-header">
+      <div class="modal-title">✅ 動作確認チェック</div>
+      <button class="btn-icon" onclick="closeCheckRunModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="check-run-info" style="margin-bottom:16px;"></div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="check-run-progress" style="width:0%"></div>
+      </div>
+      <div class="progress-text" id="check-run-progress-text"></div>
+      <div class="divider"></div>
+      <div id="check-run-items"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeCheckRunModal()">閉じる</button>
+      <button class="btn btn-success" onclick="completeCheck()">✓ 完了にする</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// データ定義
+// ============================================================
+
+const EQUIPMENT_CATEGORIES = [
+  {
+    id: 'ioi',
+    name: 'ioi一式',
+    icon: '🩺',
+    items: ['本体', 'プリンター', '持ち手', '用紙', 'インク'],
+  },
+  {
+    id: 'vascular',
+    name: '血管年齢',
+    icon: '🫀',
+    items: ['本体', 'パソコン', '用紙', 'プリンター', 'インク', 'スティックのり'],
+  },
+  {
+    id: 'bone',
+    name: '骨密度',
+    icon: '🦴',
+    items: ['本体', 'ロール紙', '用紙'],
+  },
+  {
+    id: 'result',
+    name: '結果説明',
+    icon: '📊',
+    items: ['パソコン', 'プロジェクター', 'スクリーン', '音響'],
+  },
+  {
+    id: 'misc',
+    name: 'その他備品',
+    icon: '📦',
+    items: ['ジョイントマット', 'アルコールティッシュ', 'ゴミ袋', '延長コード', 'ドラムコード'],
+  },
+];
+
+// ============================================================
+// Firebase 初期化
+// ============================================================
+
+const firebaseConfig = {
+  apiKey: "AIzaSyASULRvn4SnQTMtmX9chjycSaZ3DQoA-8M",
+  authDomain: "tairyoku-kanri.firebaseapp.com",
+  databaseURL: "https://tairyoku-kanri-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "tairyoku-kanri",
+  storageBucket: "tairyoku-kanri.firebasestorage.app",
+  messagingSenderId: "907264480745",
+  appId: "1:907264480745:web:0324be16988e58b1326778"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Firebase ヘルパー：配列→オブジェクト（ID をキーに）
+function arrToObj(arr) {
+  const obj = {};
+  (arr || []).forEach(item => { obj[item.id] = item; });
+  return obj;
+}
+// Firebase ヘルパー：オブジェクト→配列
+function objToArr(val) {
+  if (!val) return [];
+  return Object.values(val);
+}
+// 配列データを Firebase に保存
+function saveArr(path, arr) {
+  db.ref(path).set(arrToObj(arr));
+}
+// オブジェクトデータを Firebase に保存
+function saveObj(path, obj) {
+  db.ref(path).set(obj || {});
+}
+
+// ローカル変数（Firebase リスナーが常に最新を維持）
+let events          = [];
+let staff           = [];
+let locations       = {};
+let checks          = [];
+let locationOptions = [];
+
+let editingEventId     = null;
+let editingCheckId     = null;
+let runningCheckId     = null;
+let editingLocationId  = null;
+let equipmentItemsDef   = {}; // { categoryId: ['アイテム名', ...] }
+let equipmentCategoryDefs = []; // [{ id, name, icon }, ...]
+
+// 現在アクティブなページを取得
+function activePage() {
+  const p = document.querySelector('.page.active');
+  return p ? p.id.replace('page-', '') : '';
+}
+
+// ============================================================
+// Firebase リアルタイムリスナー（全デバイス同期）
+// ============================================================
+
+function initFirebase() {
+  // ローディング表示
+  showToast('📡 データを読み込み中…');
+
+  db.ref('staff').on('value', snap => {
+    staff = objToArr(snap.val());
+    if (activePage() === 'staff') renderStaff();
+  });
+
+  db.ref('locationOptions').on('value', snap => {
+    const opts = objToArr(snap.val());
+    if (opts.length === 0) {
+      // 初回のみデフォルト4か所を登録
+      const defaults = ['ハッピー', 'さざんぴあ', '篠栗', '青木家倉庫']
+        .map(name => ({ id: uid(), name }));
+      saveArr('locationOptions', defaults);
+    } else {
+      locationOptions = opts;
+      if (activePage() === 'equipment') renderEquipment();
+    }
+  });
+
+  db.ref('locations').on('value', snap => {
+    locations = snap.val() || {};
+    if (activePage() === 'equipment') renderEquipment();
+  });
+
+  db.ref('checks').on('value', snap => {
+    checks = objToArr(snap.val());
+    if (activePage() === 'check') renderChecks();
+    // 動作確認モーダルが開いている場合も進捗を更新
+    if (runningCheckId) updateRunProgress(runningCheckId);
+  });
+
+  db.ref('events').on('value', snap => {
+    events = objToArr(snap.val());
+    if (activePage() === 'schedule') renderEvents();
+    showToast('✅ 接続完了');
+  });
+
+  db.ref('inventory').on('value', snap => {
+    inventory = objToArr(snap.val());
+    if (activePage() === 'inventory') renderInventory();
+  });
+
+  db.ref('equipmentUnits').on('value', snap => {
+    equipmentUnits = objToArr(snap.val());
+    if (activePage() === 'equipment') renderUnits();
+  });
+
+  db.ref('equipmentCategoryDefs').on('value', snap => {
+    const val = snap.val();
+    const arr = val ? (Array.isArray(val) ? val.filter(Boolean) : Object.values(val).filter(Boolean)) : [];
+    if (arr.length === 0) {
+      // 初回：デフォルトカテゴリを保存
+      db.ref('equipmentCategoryDefs').set(
+        EQUIPMENT_CATEGORIES.map(c => ({ id: c.id, name: c.name, icon: c.icon }))
+      );
+    } else {
+      equipmentCategoryDefs = arr;
+      if (activePage() === 'equipment') renderEquipment();
+    }
+  });
+
+  db.ref('equipmentItemsDef').on('value', snap => {
+    const val = snap.val();
+    if (!val) {
+      // 初回：デフォルトアイテムを保存
+      const defaults = {};
+      EQUIPMENT_CATEGORIES.forEach(cat => { defaults[cat.id] = [...cat.items]; });
+      db.ref('equipmentItemsDef').set(defaults);
+    } else {
+      equipmentItemsDef = val;
+      if (activePage() === 'equipment') renderEquipment();
+    }
+  });
+}
+
+// ============================================================
+// タブ切り替え
+// ============================================================
+
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  event.currentTarget.classList.add('active');
+
+  if (page === 'equipment') renderEquipment();
+  if (page === 'schedule')  renderEvents();
+  if (page === 'check')     renderChecks();
+  if (page === 'staff')     renderStaff();
+  if (page === 'inventory') renderInventory();
+}
+
+// ============================================================
+// 在庫管理
+// ============================================================
+
+let inventory = [];
+let inventoryFilter = 'all';
+let editingInventoryId = null;
+let inventoryPhotoData = null;
+
+const BUILT_IN_CATS = {
+  ioi:      { name: 'ioi一式',   icon: '🩺' },
+  vascular: { name: '血管年齢',  icon: '🫀' },
+  bone:     { name: '骨密度',    icon: '🦴' },
+  result:   { name: '結果説明',  icon: '📊' },
+  misc:     { name: 'その他備品', icon: '📦' },
+};
+
+function getCatLabel(catId, customName) {
+  const c = BUILT_IN_CATS[catId];
+  if (c) return `${c.icon} ${c.name}`;
+  return customName || catId || 'その他';
+}
+function getCatIcon(catId) {
+  return BUILT_IN_CATS[catId]?.icon || '📦';
+}
+
+function toggleCustomCategory(val) {
+  document.getElementById('inv-custom-category').style.display = val === 'custom' ? 'block' : 'none';
+}
+
+function renderInventory() {
+  // カテゴリフィルター
+  const cats = [...new Map(inventory.map(i => [i.category + (i.customCategory||''), i])).values()];
+  const filterEl = document.getElementById('inventory-filter');
+  filterEl.innerHTML = `
+    <button class="filter-btn ${inventoryFilter === 'all' ? 'active' : ''}" onclick="setInventoryFilter('all')">すべて（${inventory.length}）</button>
+    ${[...new Map(inventory.map(i => [i.category === 'custom' ? (i.customCategory||'custom') : i.category, { cat: i.category, custom: i.customCategory }])).entries()].map(([key, v]) => `
+      <button class="filter-btn ${inventoryFilter === key ? 'active' : ''}" onclick="setInventoryFilter('${key}')">
+        ${getCatLabel(v.cat, v.custom)}（${inventory.filter(i => (i.category === 'custom' ? (i.customCategory||'custom') : i.category) === key).length}）
+      </button>
+    `).join('')}
+  `;
+
+  const el = document.getElementById('inventory-list');
+  const filtered = inventoryFilter === 'all'
+    ? inventory
+    : inventory.filter(i => (i.category === 'custom' ? (i.customCategory||'custom') : i.category) === inventoryFilter);
+
+  if (inventory.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon">📦</div>
+      <div class="empty-state-text">在庫品を追加してください</div>
+      <button class="btn btn-primary" onclick="openInventoryModal()">＋ 追加する</button>
+    </div>`;
+    return;
+  }
+  if (filtered.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-text">このカテゴリの品目はありません</div></div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(item => {
+    const stock    = item.stock ?? 0;
+    const minStock = item.minStock;
+    const hasAlert = minStock !== null && minStock !== undefined && minStock !== '';
+    let alertClass = '', alertText = '';
+    if (hasAlert) {
+      if (stock < Number(minStock))       { alertClass = 'stock-alert-red';    alertText = '🔴 在庫不足！'; }
+      else if (stock <= Number(minStock)) { alertClass = 'stock-alert-yellow'; alertText = '🟡 残り少ない'; }
+      else                                { alertClass = 'stock-ok';           alertText = '🟢'; }
+    }
+    const catLabel = getCatLabel(item.category, item.customCategory);
+    const catIcon  = getCatIcon(item.category);
+
+    return `
+      <div class="list-item" style="margin-bottom:12px; padding:14px;">
+        <div style="display:flex; gap:14px; align-items:flex-start;">
+          <!-- 写真 -->
+          <div class="inv-photo-box" onclick="openInventoryModal('${item.id}')" title="タップして編集">
+            ${item.photo
+              ? `<img src="${item.photo}" style="width:100%;height:100%;object-fit:cover;">`
+              : `<span style="font-size:30px;">${catIcon}</span>`}
+          </div>
+          <!-- 情報 -->
+          <div style="flex:1; min-width:0;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+              <div>
+                <div style="font-size:15px; font-weight:600;">${esc(item.name)}</div>
+                <div style="font-size:12px; color:var(--gray-500); margin-top:2px;">${catLabel}</div>
+                ${item.model ? `<div style="font-size:12px; color:var(--gray-500);">🏷 ${esc(item.model)}</div>` : ''}
+              </div>
+              <div style="display:flex; gap:4px; flex-shrink:0;">
+                <button class="btn-icon" onclick="openInventoryModal('${item.id}')">✏️</button>
+                <button class="btn-icon danger" onclick="removeInventoryItem('${item.id}')">🗑️</button>
+              </div>
+            </div>
+            <!-- 在庫カウンター -->
+            <div style="display:flex; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap;">
+              <div class="stock-counter">
+                <button class="stock-btn" onclick="updateStock('${item.id}', -1)">−</button>
+                <span style="font-size:18px; font-weight:700; min-width:36px; text-align:center;" class="${alertClass}">${stock}</span>
+                <span style="font-size:13px; color:var(--gray-500);">${esc(item.unit || '')}</span>
+                <button class="stock-btn" onclick="updateStock('${item.id}', 1)">＋</button>
+              </div>
+              ${alertText ? `<span class="${alertClass}" style="font-size:13px;">${alertText}</span>` : ''}
+              ${hasAlert ? `<span style="font-size:12px; color:var(--gray-400);">最低 ${minStock}${esc(item.unit||'')}</span>` : ''}
+            </div>
+            ${item.note ? `<div style="margin-top:6px; font-size:12px; color:var(--gray-500);">📝 ${esc(item.note)}</div>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function setInventoryFilter(cat) {
+  inventoryFilter = cat;
+  renderInventory();
+}
+
+// 写真処理（リサイズしてbase64変換）
+function handleInventoryPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxSize = 500;
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > maxSize) { h = Math.round(h * maxSize / w); w = maxSize; } }
+      else        { if (h > maxSize) { w = Math.round(w * maxSize / h); h = maxSize; } }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      inventoryPhotoData = canvas.toDataURL('image/jpeg', 0.75);
+      document.getElementById('inv-photo-preview').innerHTML =
+        `<img src="${inventoryPhotoData}" style="width:100%;height:100%;object-fit:cover;">`;
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function openInventoryModal(id = null) {
+  editingInventoryId = id;
+  inventoryPhotoData = null;
+  document.getElementById('inv-modal-title').textContent = id ? '在庫品を編集' : '在庫品を追加';
+  document.getElementById('inv-photo-preview').innerHTML = `<span style="font-size:36px; color:var(--gray-300);">📷</span>`;
+  document.getElementById('inv-photo-input').value = '';
+  document.getElementById('inv-custom-category').style.display = 'none';
+
+  if (id) {
+    const item = inventory.find(i => i.id === id);
+    if (item) {
+      document.getElementById('inv-name').value       = item.name || '';
+      document.getElementById('inv-category').value   = item.category || 'misc';
+      document.getElementById('inv-model').value      = item.model || '';
+      document.getElementById('inv-stock').value      = item.stock ?? '';
+      document.getElementById('inv-unit').value       = item.unit || '箱';
+      document.getElementById('inv-min-stock').value  = item.minStock ?? '';
+      document.getElementById('inv-note').value       = item.note || '';
+      if (item.category === 'custom') {
+        document.getElementById('inv-custom-category').style.display = 'block';
+        document.getElementById('inv-custom-category').value = item.customCategory || '';
+      }
+      if (item.photo) {
+        inventoryPhotoData = item.photo;
+        document.getElementById('inv-photo-preview').innerHTML =
+          `<img src="${item.photo}" style="width:100%;height:100%;object-fit:cover;">`;
+      }
+    }
+  } else {
+    document.getElementById('inv-name').value      = '';
+    document.getElementById('inv-category').value  = 'ioi';
+    document.getElementById('inv-model').value     = '';
+    document.getElementById('inv-stock').value     = '';
+    document.getElementById('inv-unit').value      = '箱';
+    document.getElementById('inv-min-stock').value = '';
+    document.getElementById('inv-note').value      = '';
+  }
+  document.getElementById('inventory-modal').classList.add('active');
+}
+
+function closeInventoryModal() {
+  document.getElementById('inventory-modal').classList.remove('active');
+  inventoryPhotoData = null;
+}
+
+function saveInventoryItem() {
+  const name = document.getElementById('inv-name').value.trim();
+  if (!name) { alert('品目名は必須です'); return; }
+  const cat = document.getElementById('inv-category').value;
+  const existingPhoto = editingInventoryId ? inventory.find(i => i.id === editingInventoryId)?.photo : null;
+
+  const item = {
+    id:             editingInventoryId || uid(),
+    name,
+    category:       cat,
+    customCategory: cat === 'custom' ? document.getElementById('inv-custom-category').value.trim() : '',
+    model:          document.getElementById('inv-model').value.trim(),
+    stock:          Number(document.getElementById('inv-stock').value) || 0,
+    unit:           document.getElementById('inv-unit').value,
+    minStock:       document.getElementById('inv-min-stock').value !== '' ? Number(document.getElementById('inv-min-stock').value) : null,
+    note:           document.getElementById('inv-note').value.trim(),
+    photo:          inventoryPhotoData || existingPhoto || null,
+  };
+
+  if (editingInventoryId) {
+    inventory = inventory.map(i => i.id === editingInventoryId ? item : i);
+  } else {
+    inventory.push(item);
+  }
+  saveArr('inventory', inventory);
+  closeInventoryModal();
+  showToast(editingInventoryId ? '更新しました ✓' : '追加しました ✓');
+}
+
+function removeInventoryItem(id) {
+  const item = inventory.find(i => i.id === id);
+  if (!confirm(`「${item ? item.name : 'この品目'}」を削除しますか？`)) return;
+  inventory = inventory.filter(i => i.id !== id);
+  saveArr('inventory', inventory);
+  showToast('削除しました');
+}
+
+function updateStock(id, delta) {
+  const item = inventory.find(i => i.id === id);
+  if (!item) return;
+  item.stock = Math.max(0, (item.stock ?? 0) + delta);
+  // 在庫数だけを直接Firebase更新（高速）
+  db.ref('inventory/' + id + '/stock').set(item.stock);
+  renderInventory();
+}
+
+// ============================================================
+// 共通：画像リサイズ
+// ============================================================
+
+function resizeImage(file, callback) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxSize = 500;
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > maxSize) { h = Math.round(h * maxSize / w); w = maxSize; } }
+      else        { if (h > maxSize) { w = Math.round(w * maxSize / h); h = maxSize; } }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.75));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ============================================================
+// 機材ユニット管理
+// ============================================================
+
+let equipmentUnits = [];
+let editingUnitId  = null;
+let unitPhotoData  = null;
+let unitFilter     = 'all';
+let subItems       = [];
+
+const UNIT_CATS = {
+  ioi:      { name: 'ioi一式',   icon: '🩺' },
+  vascular: { name: '血管年齢',  icon: '🫀' },
+  bone:     { name: '骨密度',    icon: '🦴' },
+  result:   { name: '結果説明',  icon: '📊' },
+  misc:     { name: 'その他',    icon: '📦' },
+};
+
+function renderUnits() {
+  const filterEl = document.getElementById('unit-filter');
+  const el       = document.getElementById('unit-list');
+  if (!el) return;
+
+  // フィルターボタン
+  const usedCats = [...new Set(equipmentUnits.map(u => u.category))];
+  filterEl.innerHTML = `
+    <button class="filter-btn ${unitFilter==='all'?'active':''}" onclick="setUnitFilter('all')">すべて（${equipmentUnits.length}）</button>
+    ${usedCats.map(k => {
+      const c = UNIT_CATS[k] || { name: k, icon: '📦' };
+      const cnt = equipmentUnits.filter(u => u.category === k).length;
+      return `<button class="filter-btn ${unitFilter===k?'active':''}" onclick="setUnitFilter('${k}')">${c.icon} ${c.name}（${cnt}）</button>`;
+    }).join('')}
+  `;
+
+  const filtered = unitFilter === 'all' ? equipmentUnits : equipmentUnits.filter(u => u.category === unitFilter);
+
+  if (equipmentUnits.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon">🖥️</div>
+      <div class="empty-state-text">機材ユニットを追加してください</div>
+      <button class="btn btn-primary" onclick="openUnitModal()">＋ 追加する</button>
+    </div>`;
+    return;
+  }
+
+  // カテゴリ別にグループ化して表示
+  const grouped = {};
+  filtered.forEach(u => { if (!grouped[u.category]) grouped[u.category] = []; grouped[u.category].push(u); });
+
+  el.innerHTML = Object.entries(grouped).map(([catId, units]) => {
+    const cat = UNIT_CATS[catId] || { name: catId, icon: '📦' };
+    return `
+      <div style="margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:600;color:var(--gray-500);letter-spacing:0.05em;margin-bottom:10px;">
+          ${cat.icon} ${cat.name}
+        </div>
+        ${units.map(unit => {
+          const subs = unit.subItems || [];
+          return `
+            <div class="list-item" style="margin-bottom:10px;padding:14px;">
+              <div style="display:flex;gap:14px;align-items:flex-start;">
+                <!-- メイン写真 -->
+                <div class="inv-photo-box" style="width:80px;height:80px;" onclick="openUnitModal('${unit.id}')">
+                  ${unit.photo
+                    ? `<img src="${unit.photo}" style="width:100%;height:100%;object-fit:cover;">`
+                    : `<span style="font-size:30px;">${cat.icon}</span>`}
+                </div>
+                <!-- 情報 -->
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+                    <div>
+                      <div style="font-size:16px;font-weight:700;">${esc(unit.name)}</div>
+                      ${unit.location ? `<div style="font-size:13px;color:var(--gray-500);margin-top:2px;">📍 ${esc(unit.location)}</div>` : ''}
+                      ${unit.pairInfo ? `<div style="font-size:13px;color:var(--primary);margin-top:3px;font-weight:500;">🔗 ${esc(unit.pairInfo)}</div>` : ''}
+                      ${unit.note    ? `<div style="font-size:12px;color:var(--gray-500);margin-top:2px;">📝 ${esc(unit.note)}</div>` : ''}
+                    </div>
+                    <div style="display:flex;gap:4px;flex-shrink:0;">
+                      <button class="btn-icon" onclick="openUnitModal('${unit.id}')">✏️</button>
+                      <button class="btn-icon danger" onclick="removeUnit('${unit.id}')">🗑️</button>
+                    </div>
+                  </div>
+                  <!-- 構成部品サムネイル -->
+                  ${subs.length > 0 ? `
+                    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                      ${subs.map(sub => `
+                        <div style="text-align:center;">
+                          <div style="width:54px;height:54px;border-radius:8px;overflow:hidden;background:var(--gray-100);border:1px solid var(--gray-200);display:flex;align-items:center;justify-content:center;">
+                            ${sub.photo
+                              ? `<img src="${sub.photo}" style="width:100%;height:100%;object-fit:cover;">`
+                              : `<span style="font-size:20px;color:var(--gray-400);">📷</span>`}
+                          </div>
+                          <div style="font-size:11px;color:var(--gray-500);margin-top:3px;max-width:54px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(sub.name)}</div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+function setUnitFilter(cat) {
+  unitFilter = cat;
+  renderUnits();
+}
+
+function handleUnitPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  resizeImage(file, data => {
+    unitPhotoData = data;
+    document.getElementById('unit-photo-preview').innerHTML =
+      `<img src="${data}" style="width:100%;height:100%;object-fit:cover;">`;
+  });
+}
+
+function addSubItem() {
+  subItems.push({ id: uid(), name: '', photo: null });
+  renderSubItems();
+}
+
+function removeSubItem(idx) {
+  subItems.splice(idx, 1);
+  renderSubItems();
+}
+
+function handleSubItemPhoto(input, idx) {
+  const file = input.files[0];
+  if (!file) return;
+  resizeImage(file, data => {
+    subItems[idx].photo = data;
+    const prev = document.getElementById('sub-preview-' + idx);
+    if (prev) prev.innerHTML = `<img src="${data}" style="width:100%;height:100%;object-fit:cover;">`;
+  });
+}
+
+function renderSubItems() {
+  const el = document.getElementById('unit-sub-items');
+  if (!el) return;
+  el.innerHTML = subItems.map((sub, idx) => `
+    <div style="border:1px solid var(--gray-200);border-radius:8px;padding:10px;margin-bottom:8px;display:flex;gap:10px;align-items:center;">
+      <div class="inv-photo-box" id="sub-preview-${idx}" style="width:56px;height:56px;flex-shrink:0;" onclick="document.getElementById('sub-photo-input-${idx}').click()">
+        ${sub.photo
+          ? `<img src="${sub.photo}" style="width:100%;height:100%;object-fit:cover;">`
+          : `<span style="font-size:20px;color:var(--gray-300);">📷</span>`}
+      </div>
+      <input type="file" id="sub-photo-input-${idx}" accept="image/*" capture="environment" style="display:none" onchange="handleSubItemPhoto(this,${idx})">
+      <input type="text" class="form-control" placeholder="部品名（例：本体、パソコン①）"
+        value="${esc(sub.name)}" oninput="subItems[${idx}].name=this.value" style="flex:1;">
+      <button class="btn-icon danger" onclick="removeSubItem(${idx})" style="flex-shrink:0;">✕</button>
+    </div>
+  `).join('');
+}
+
+function openUnitModal(id = null) {
+  editingUnitId = id;
+  unitPhotoData = null;
+  subItems = [];
+  document.getElementById('unit-modal-title').textContent = id ? '機材ユニットを編集' : '機材ユニットを追加';
+  document.getElementById('unit-photo-preview').innerHTML = `<span style="font-size:36px;color:var(--gray-300);">📷</span>`;
+  document.getElementById('unit-photo-input').value = '';
+
+  // 保管場所のオプションをセット
+  const locSel = document.getElementById('unit-location');
+  locSel.innerHTML = `<option value="">（未設定）</option>` +
+    locationOptions.map(o => `<option value="${esc(o.name)}">${esc(o.name)}</option>`).join('');
+
+  if (id) {
+    const unit = equipmentUnits.find(u => u.id === id);
+    if (unit) {
+      document.getElementById('unit-name').value     = unit.name || '';
+      document.getElementById('unit-category').value = unit.category || 'ioi';
+      locSel.value                                   = unit.location || '';
+      document.getElementById('unit-pair').value     = unit.pairInfo || '';
+      document.getElementById('unit-note').value     = unit.note || '';
+      subItems = (unit.subItems || []).map(s => ({ ...s }));
+      if (unit.photo) {
+        unitPhotoData = unit.photo;
+        document.getElementById('unit-photo-preview').innerHTML =
+          `<img src="${unit.photo}" style="width:100%;height:100%;object-fit:cover;">`;
+      }
+    }
+  } else {
+    document.getElementById('unit-name').value     = '';
+    document.getElementById('unit-category').value = 'ioi';
+    locSel.value                                   = '';
+    document.getElementById('unit-pair').value     = '';
+    document.getElementById('unit-note').value     = '';
+  }
+  renderSubItems();
+  document.getElementById('unit-modal').classList.add('active');
+}
+
+function closeUnitModal() {
+  document.getElementById('unit-modal').classList.remove('active');
+  unitPhotoData = null;
+  subItems = [];
+}
+
+function saveUnit() {
+  const name = document.getElementById('unit-name').value.trim();
+  if (!name) { alert('ユニット名は必須です'); return; }
+  const existingPhoto = editingUnitId ? equipmentUnits.find(u => u.id === editingUnitId)?.photo : null;
+
+  const unit = {
+    id:       editingUnitId || uid(),
+    name,
+    category: document.getElementById('unit-category').value,
+    location: document.getElementById('unit-location').value,
+    pairInfo: document.getElementById('unit-pair').value.trim(),
+    note:     document.getElementById('unit-note').value.trim(),
+    photo:    unitPhotoData || existingPhoto || null,
+    subItems: subItems.filter(s => s.name.trim()),
+  };
+
+  if (editingUnitId) {
+    equipmentUnits = equipmentUnits.map(u => u.id === editingUnitId ? unit : u);
+  } else {
+    equipmentUnits.push(unit);
+  }
+  saveArr('equipmentUnits', equipmentUnits);
+  closeUnitModal();
+  renderUnits();
+  showToast(editingUnitId ? '更新しました ✓' : '追加しました ✓');
+}
+
+function removeUnit(id) {
+  const unit = equipmentUnits.find(u => u.id === id);
+  if (!confirm(`「${unit ? unit.name : 'このユニット'}」を削除しますか？`)) return;
+  equipmentUnits = equipmentUnits.filter(u => u.id !== id);
+  saveArr('equipmentUnits', equipmentUnits);
+  renderUnits();
+  showToast('削除しました');
+}
+
+// ============================================================
+// スタッフ管理
+// ============================================================
+
+function renderStaff() {
+  const el = document.getElementById('staff-list');
+  if (staff.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon">👤</div>
+      <div class="empty-state-text">スタッフを追加してください</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = staff.map(s => `
+    <div class="list-item" style="padding:10px 14px; margin-bottom:8px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:18px;">👤</span>
+        <div id="staff-display-${s.id}" style="flex:1; font-size:15px; font-weight:500;">${esc(s.name)}</div>
+        <input type="text" id="staff-input-${s.id}"
+          class="form-control"
+          style="flex:1; display:none; padding:6px 10px; font-size:14px;"
+          value="${esc(s.name)}"
+          onkeydown="if(event.key==='Enter')saveStaff('${s.id}'); if(event.key==='Escape')cancelEditStaff('${s.id}');">
+        <div style="display:flex; gap:4px;" id="staff-actions-${s.id}">
+          <button class="btn btn-outline btn-sm" onclick="startEditStaff('${s.id}')">✏️ 編集</button>
+          <button class="btn-icon danger" onclick="removeStaff('${s.id}')">🗑️</button>
+        </div>
+        <div style="display:none; gap:4px;" id="staff-edit-actions-${s.id}">
+          <button class="btn btn-primary btn-sm" onclick="saveStaff('${s.id}')">保存</button>
+          <button class="btn btn-outline btn-sm" onclick="cancelEditStaff('${s.id}')">取消</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function startEditStaff(id) {
+  document.getElementById('staff-display-' + id).style.display = 'none';
+  document.getElementById('staff-input-' + id).style.display = 'block';
+  document.getElementById('staff-actions-' + id).style.display = 'none';
+  document.getElementById('staff-edit-actions-' + id).style.display = 'flex';
+  document.getElementById('staff-input-' + id).focus();
+}
+
+function cancelEditStaff(id) {
+  const s = staff.find(x => x.id === id);
+  if (s) document.getElementById('staff-input-' + id).value = s.name;
+  document.getElementById('staff-display-' + id).style.display = 'block';
+  document.getElementById('staff-input-' + id).style.display = 'none';
+  document.getElementById('staff-actions-' + id).style.display = 'flex';
+  document.getElementById('staff-edit-actions-' + id).style.display = 'none';
+}
+
+function saveStaff(id) {
+  const input = document.getElementById('staff-input-' + id);
+  const name = input.value.trim();
+  if (!name) { alert('名前を入力してください'); return; }
+  const s = staff.find(x => x.id === id);
+  if (s) {
+    s.name = name;
+    saveArr('staff', staff);
+    renderStaff();
+    showToast('スタッフ名を更新しました ✓');
+  }
+}
+
+function addStaff() {
+  const input = document.getElementById('new-staff-name');
+  const name = input.value.trim();
+  if (!name) { alert('名前を入力してください'); return; }
+  staff.push({ id: uid(), name });
+  saveArr('staff', staff);
+  input.value = '';
+  renderStaff();
+}
+
+function removeStaff(id) {
+  const s = staff.find(x => x.id === id);
+  if (!confirm(`「${s ? s.name : 'このスタッフ'}」を削除しますか？`)) return;
+  staff = staff.filter(x => x.id !== id);
+  saveArr('staff', staff);
+  renderStaff();
+}
+
+// ============================================================
+// 保管場所マスター管理
+// ============================================================
+
+function renderLocationOptions() {
+  const el = document.getElementById('location-options-list');
+  if (locationOptions.length === 0) {
+    el.innerHTML = `<p style="font-size:13px; color:var(--gray-500);">場所が登録されていません</p>`;
+    return;
+  }
+  el.innerHTML = locationOptions.map(opt => `
+    <div class="list-item" style="padding:10px 14px; margin-bottom:8px;" id="loc-opt-${opt.id}">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:18px;">📍</span>
+        <div id="loc-opt-display-${opt.id}" style="flex:1; font-size:15px; font-weight:500;">${esc(opt.name)}</div>
+        <input type="text" id="loc-opt-input-${opt.id}"
+          class="form-control"
+          style="flex:1; display:none; padding:6px 10px; font-size:14px;"
+          value="${esc(opt.name)}"
+          onkeydown="if(event.key==='Enter')saveLocationOption('${opt.id}'); if(event.key==='Escape')cancelEditLocation('${opt.id}');">
+        <div style="display:flex; gap:4px;" id="loc-opt-actions-${opt.id}">
+          <button class="btn btn-outline btn-sm" onclick="startEditLocation('${opt.id}')">✏️ 編集</button>
+          <button class="btn-icon danger" onclick="removeLocationOption('${opt.id}')">🗑️</button>
+        </div>
+        <div style="display:none; gap:4px;" id="loc-opt-edit-actions-${opt.id}">
+          <button class="btn btn-primary btn-sm" onclick="saveLocationOption('${opt.id}')">保存</button>
+          <button class="btn btn-outline btn-sm" onclick="cancelEditLocation('${opt.id}')">取消</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function startEditLocation(id) {
+  document.getElementById('loc-opt-display-' + id).style.display = 'none';
+  document.getElementById('loc-opt-input-' + id).style.display = 'block';
+  document.getElementById('loc-opt-actions-' + id).style.display = 'none';
+  document.getElementById('loc-opt-edit-actions-' + id).style.display = 'flex';
+  document.getElementById('loc-opt-input-' + id).focus();
+}
+
+function cancelEditLocation(id) {
+  const opt = locationOptions.find(o => o.id === id);
+  if (opt) document.getElementById('loc-opt-input-' + id).value = opt.name;
+  document.getElementById('loc-opt-display-' + id).style.display = 'block';
+  document.getElementById('loc-opt-input-' + id).style.display = 'none';
+  document.getElementById('loc-opt-actions-' + id).style.display = 'flex';
+  document.getElementById('loc-opt-edit-actions-' + id).style.display = 'none';
+}
+
+function saveLocationOption(id) {
+  const input = document.getElementById('loc-opt-input-' + id);
+  const name = input.value.trim();
+  if (!name) { alert('場所名を入力してください'); return; }
+  const opt = locationOptions.find(o => o.id === id);
+  if (opt) {
+    const oldName = opt.name;
+    opt.name = name;
+    saveArr('locationOptions', locationOptions);
+    // 道具の保管場所も更新
+    Object.keys(locations).forEach(k => {
+      if (locations[k] === oldName) locations[k] = name;
+    });
+    saveObj('locations', locations);
+    renderLocationOptions();
+    renderEquipment();
+    showToast('場所名を更新しました ✓');
+  }
+}
+
+function addLocationOption() {
+  const input = document.getElementById('new-location-name');
+  const name = input.value.trim();
+  if (!name) { alert('場所名を入力してください'); return; }
+  if (locationOptions.some(o => o.name === name)) { alert('同じ名前の場所がすでにあります'); return; }
+  locationOptions.push({ id: uid(), name });
+  saveArr('locationOptions', locationOptions);
+  input.value = '';
+  renderLocationOptions();
+  renderEquipment();
+  showToast(`「${name}」を追加しました ✓`);
+}
+
+function removeLocationOption(id) {
+  const opt = locationOptions.find(o => o.id === id);
+  if (!opt) return;
+  if (!confirm(`「${opt.name}」を削除しますか？\nこの場所が設定された道具は「未設定」になります。`)) return;
+  // この場所が設定されている道具をリセット
+  Object.keys(locations).forEach(k => {
+    if (locations[k] === opt.name) locations[k] = '';
+  });
+  saveObj('locations', locations);
+  locationOptions = locationOptions.filter(o => o.id !== id);
+  saveArr('locationOptions', locationOptions);
+  renderLocationOptions();
+  renderEquipment();
+  showToast('場所を削除しました');
+}
+
+// ============================================================
+// 道具管理
+// ============================================================
+
+// 保管場所セレクトのオプション生成
+function locationSelectOptions(selected) {
+  return `<option value=""${!selected ? ' selected' : ''}>（未設定）</option>` +
+    locationOptions.map(o =>
+      `<option value="${esc(o.name)}"${selected === o.name ? ' selected' : ''}>${esc(o.name)}</option>`
+    ).join('');
+}
+
+function renderEquipment() {
+  renderLocationOptions();
+  renderUnits();
+  const el = document.getElementById('equipment-list');
+  // カテゴリ未ロード時は空表示
+  const cats = equipmentCategoryDefs.length > 0 ? equipmentCategoryDefs : [];
+
+  el.innerHTML = cats.map(cat => {
+    const items = equipmentItemsDef[cat.id] || [];
+    return `
+      <div class="equip-category">
+        <!-- カテゴリヘッダー -->
+        <div class="equip-category-header" style="justify-content:space-between; padding:10px 14px;">
+          <!-- 表示モード -->
+          <div id="cat-display-${cat.id}" style="display:flex;align-items:center;gap:8px;flex:1;">
+            <span style="font-size:15px;font-weight:600;">${esc(cat.icon)} ${esc(cat.name)}</span>
+            <button class="btn-icon" style="padding:3px;font-size:12px;" onclick="startEditCategory('${cat.id}')">✏️</button>
+            <button class="btn-icon danger" style="padding:3px;font-size:12px;" onclick="deleteCategory('${cat.id}')">🗑️</button>
+          </div>
+          <!-- 編集モード（非表示） -->
+          <div id="cat-edit-${cat.id}" style="display:none;align-items:center;gap:6px;flex:1;flex-wrap:wrap;">
+            <input type="text" id="cat-icon-${cat.id}" class="form-control"
+              value="${esc(cat.icon)}" placeholder="🔧"
+              style="width:54px;text-align:center;padding:5px 6px;font-size:18px;">
+            <input type="text" id="cat-name-${cat.id}" class="form-control"
+              value="${esc(cat.name)}" placeholder="カテゴリ名"
+              style="flex:1;padding:5px 8px;font-size:14px;"
+              onkeydown="if(event.key==='Enter')saveCategoryEdit('${cat.id}');if(event.key==='Escape')cancelEditCategory('${cat.id}');">
+            <button class="btn btn-primary btn-sm" onclick="saveCategoryEdit('${cat.id}')">保存</button>
+            <button class="btn btn-outline btn-sm" onclick="cancelEditCategory('${cat.id}')">取消</button>
+          </div>
+        </div>
+        <!-- アイテム一覧 -->
+        ${items.map((item, idx) => {
+          const key = cat.id + '_' + item;
+          const loc = locations[key] || '';
+          return `
+            <div class="equip-item">
+              <div id="equip-display-${cat.id}-${idx}" style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">
+                <span class="equip-item-name">${esc(item)}</span>
+                <button class="btn-icon" style="padding:3px;font-size:12px;" onclick="startEditEquipItem('${cat.id}',${idx})">✏️</button>
+                <button class="btn-icon danger" style="padding:3px;font-size:12px;" onclick="deleteEquipItem('${cat.id}',${idx},'${esc(item)}')">🗑️</button>
+              </div>
+              <div id="equip-edit-${cat.id}-${idx}" style="display:none;align-items:center;gap:6px;flex:1;min-width:0;">
+                <input type="text" id="equip-input-${cat.id}-${idx}" class="form-control"
+                  value="${esc(item)}" style="padding:5px 8px;font-size:13px;flex:1;"
+                  onkeydown="if(event.key==='Enter')saveEquipItemName('${cat.id}',${idx},'${esc(item)}');if(event.key==='Escape')cancelEditEquipItem('${cat.id}',${idx},'${esc(item)}');">
+                <button class="btn btn-primary btn-sm" onclick="saveEquipItemName('${cat.id}',${idx},'${esc(item)}')">保存</button>
+                <button class="btn btn-outline btn-sm" onclick="cancelEditEquipItem('${cat.id}',${idx},'${esc(item)}')">取消</button>
+              </div>
+              <div class="equip-location" style="flex-shrink:0;">
+                <select data-key="${key}" onchange="updateLocation(this)" class="form-control"
+                  style="padding:6px 8px;font-size:13px;width:140px;">
+                  ${locationSelectOptions(loc)}
+                </select>
+              </div>
+            </div>
+          `;
+        }).join('')}
+        <!-- アイテム追加行 -->
+        <div class="equip-add-row">
+          <input type="text" id="new-equip-input-${cat.id}" class="form-control"
+            placeholder="アイテムを追加..." style="padding:6px 10px;font-size:13px;"
+            onkeydown="if(event.key==='Enter')addEquipItem('${cat.id}')">
+          <button class="btn btn-outline btn-sm" onclick="addEquipItem('${cat.id}')" style="white-space:nowrap;">＋ 追加</button>
+        </div>
+      </div>
+    `;
+  }).join('') + `
+    <!-- カテゴリ追加行 -->
+    <div style="margin-top:12px;padding:12px;border:2px dashed var(--gray-200);border-radius:10px;background:var(--gray-50);">
+      <div style="font-size:13px;font-weight:500;color:var(--gray-600);margin-bottom:8px;">＋ 新しいカテゴリを追加</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input type="text" id="new-cat-icon" class="form-control" placeholder="🔧" style="width:58px;text-align:center;font-size:18px;padding:6px;">
+        <input type="text" id="new-cat-name" class="form-control" placeholder="カテゴリ名（例：血圧測定）" style="flex:1;min-width:140px;"
+          onkeydown="if(event.key==='Enter')addCategory()">
+        <button class="btn btn-primary btn-sm" onclick="addCategory()" style="white-space:nowrap;">追加</button>
+      </div>
+    </div>
+  `;
+}
+
+// カテゴリ編集
+function startEditCategory(catId) {
+  document.getElementById('cat-display-' + catId).style.display = 'none';
+  document.getElementById('cat-edit-'    + catId).style.display = 'flex';
+  document.getElementById('cat-name-'    + catId).focus();
+}
+
+function cancelEditCategory(catId) {
+  document.getElementById('cat-display-' + catId).style.display = 'flex';
+  document.getElementById('cat-edit-'    + catId).style.display = 'none';
+}
+
+function saveCategoryEdit(catId) {
+  const newIcon = document.getElementById('cat-icon-' + catId).value.trim() || '📦';
+  const newName = document.getElementById('cat-name-' + catId).value.trim();
+  if (!newName) { alert('カテゴリ名を入力してください'); return; }
+  const idx = equipmentCategoryDefs.findIndex(c => c.id === catId);
+  if (idx < 0) return;
+  equipmentCategoryDefs[idx] = { ...equipmentCategoryDefs[idx], name: newName, icon: newIcon };
+  db.ref('equipmentCategoryDefs').set(equipmentCategoryDefs);
+  showToast('カテゴリ名を更新しました ✓');
+}
+
+function deleteCategory(catId) {
+  const cat = equipmentCategoryDefs.find(c => c.id === catId);
+  if (!confirm(`カテゴリ「${cat ? cat.name : catId}」とその全アイテムを削除しますか？\n保管場所の設定もすべて削除されます。`)) return;
+  // アイテム定義・保管場所を削除
+  db.ref('equipmentItemsDef/' + catId).remove();
+  delete equipmentItemsDef[catId];
+  Object.keys(locations).forEach(k => { if (k.startsWith(catId + '_')) delete locations[k]; });
+  saveObj('locations', locations);
+  equipmentCategoryDefs = equipmentCategoryDefs.filter(c => c.id !== catId);
+  db.ref('equipmentCategoryDefs').set(equipmentCategoryDefs);
+  showToast('カテゴリを削除しました');
+}
+
+function addCategory() {
+  const iconInput = document.getElementById('new-cat-icon');
+  const nameInput = document.getElementById('new-cat-name');
+  const icon = iconInput.value.trim() || '📦';
+  const name = nameInput.value.trim();
+  if (!name) { alert('カテゴリ名を入力してください'); return; }
+  if (equipmentCategoryDefs.some(c => c.name === name)) { alert('同じ名前のカテゴリがすでにあります'); return; }
+  const newId = 'cat_' + uid();
+  equipmentCategoryDefs.push({ id: newId, name, icon });
+  db.ref('equipmentCategoryDefs').set(equipmentCategoryDefs);
+  db.ref('equipmentItemsDef/' + newId).set([]); // 空のアイテムリストで初期化
+  iconInput.value = '';
+  nameInput.value = '';
+  showToast(`「${name}」を追加しました ✓`);
+}
+
+// アイテム編集
+function startEditEquipItem(catId, idx) {
+  document.getElementById('equip-display-' + catId + '-' + idx).style.display = 'none';
+  document.getElementById('equip-edit-'   + catId + '-' + idx).style.display = 'flex';
+  document.getElementById('equip-input-'  + catId + '-' + idx).focus();
+}
+
+function cancelEditEquipItem(catId, idx, originalName) {
+  document.getElementById('equip-input-'  + catId + '-' + idx).value = originalName;
+  document.getElementById('equip-display-'+ catId + '-' + idx).style.display = 'flex';
+  document.getElementById('equip-edit-'   + catId + '-' + idx).style.display = 'none';
+}
+
+function saveEquipItemName(catId, idx, oldName) {
+  const newName = document.getElementById('equip-input-' + catId + '-' + idx).value.trim();
+  if (!newName) { alert('アイテム名を入力してください'); return; }
+  const items = [...(equipmentItemsDef[catId] || [])];
+  items[idx] = newName;
+  // 保管場所のキーも移行
+  if (oldName !== newName) {
+    const oldKey = catId + '_' + oldName;
+    const newKey = catId + '_' + newName;
+    if (locations[oldKey] !== undefined) {
+      locations[newKey] = locations[oldKey];
+      delete locations[oldKey];
+      saveObj('locations', locations);
+    }
+  }
+  db.ref('equipmentItemsDef/' + catId).set(items);
+  showToast('更新しました ✓');
+}
+
+function deleteEquipItem(catId, idx, itemName) {
+  if (!confirm(`「${itemName}」を削除しますか？`)) return;
+  const items = [...(equipmentItemsDef[catId] || [])];
+  items.splice(idx, 1);
+  // 保管場所のキーも削除
+  const key = catId + '_' + itemName;
+  if (locations[key] !== undefined) { delete locations[key]; saveObj('locations', locations); }
+  db.ref('equipmentItemsDef/' + catId).set(items);
+  showToast('削除しました');
+}
+
+function addEquipItem(catId) {
+  const input = document.getElementById('new-equip-input-' + catId);
+  const name  = input.value.trim();
+  if (!name) return;
+  const items = [...(equipmentItemsDef[catId] || [])];
+  if (items.includes(name)) { alert('同じ名前のアイテムがすでにあります'); return; }
+  items.push(name);
+  db.ref('equipmentItemsDef/' + catId).set(items);
+  input.value = '';
+  showToast(`「${name}」を追加しました ✓`);
+}
+
+function updateLocation(select) {
+  locations[select.dataset.key] = select.value;
+}
+
+function saveLocations() {
+  saveObj('locations', locations);
+  showToast('保管場所を保存しました ✓');
+}
+
+// ============================================================
+// 測定イベント
+// ============================================================
+
+function renderEvents() {
+  const el = document.getElementById('event-list');
+  if (events.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon">📅</div>
+      <div class="empty-state-text">測定スケジュールを追加してください</div>
+      <button class="btn btn-primary" onclick="openEventModal()">＋ 追加する</button>
+    </div>`;
+    return;
+  }
+
+  const sorted = [...events].sort((a, b) => a.date.localeCompare(b.date));
+  el.innerHTML = sorted.map(ev => {
+    const staffNames = (ev.staff || []).map(id => {
+      const s = staff.find(x => x.id === id);
+      return s ? s.name : '';
+    }).filter(Boolean);
+
+    const equipNames = (ev.equipment || []).map(id => {
+      const cat = EQUIPMENT_CATEGORIES.find(c => c.id === id);
+      return cat ? `${cat.icon}${cat.name}` : '';
+    }).filter(Boolean);
+
+    const today = new Date().toISOString().split('T')[0];
+    let statusBadge = '';
+    if (ev.date < today) statusBadge = `<span class="badge badge-gray">終了</span>`;
+    else if (ev.date === today) statusBadge = `<span class="badge badge-green">本日</span>`;
+    else statusBadge = `<span class="badge badge-blue">予定</span>`;
+
+    return `
+      <div class="list-item">
+        <div class="list-item-header">
+          <div>
+            <div class="list-item-title">
+              ${formatDate(ev.date)} ${statusBadge}
+            </div>
+            <div style="font-size:14px; color:var(--gray-600); margin-top:2px;">
+              📍 ${esc(ev.location)}
+            </div>
+            <div style="font-size:13px; color:var(--gray-500); margin-top:4px; display:flex; flex-wrap:wrap; gap:12px;">
+              ${ev.gather ? `<span>🚩 集合 ${ev.gather}</span>` : ''}
+              ${ev.start || ev.end ? `<span>🕐 ${ev.start || ''}〜${ev.end || ''}</span>` : ''}
+              ${(() => {
+                if (!ev.staffCount) return '';
+                const assigned = (ev.staff || []).length;
+                const needed = ev.staffCount;
+                const remaining = needed - assigned;
+                if (remaining <= 0) {
+                  return `<span>👥 ${needed}人必要</span><span style="background:var(--success-light);color:var(--success);font-weight:600;padding:2px 8px;border-radius:20px;font-size:12px;">スタッフ🆗</span>`;
+                } else {
+                  return `<span>👥 ${needed}人必要</span><span style="color:var(--gray-600);">現在${assigned}名確保、</span><span style="color:var(--danger);font-weight:600;">あと${remaining}人！</span>`;
+                }
+              })()}
+            </div>
+            ${staffNames.length > 0 ? `
+              <div class="staff-tags" style="margin-top:8px;">
+                ${staffNames.map(n => `<span class="staff-tag">👤 ${esc(n)}</span>`).join('')}
+              </div>
+            ` : ''}
+            ${equipNames.length > 0 ? `
+              <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">
+                ${equipNames.map(n => `<span class="badge badge-gray">${n}</span>`).join('')}
+              </div>
+            ` : ''}
+            ${ev.note ? `<div style="margin-top:8px; font-size:13px; color:var(--gray-500);">📝 ${esc(ev.note)}</div>` : ''}
+          </div>
+          <div class="list-item-actions">
+            <button class="btn-icon" onclick="openEventModal('${ev.id}')" title="編集">✏️</button>
+            <button class="btn-icon danger" onclick="removeEvent('${ev.id}')" title="削除">🗑️</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openEventModal(id = null) {
+  editingEventId = id;
+  const modal = document.getElementById('event-modal');
+  document.getElementById('event-modal-title').textContent = id ? '測定を編集' : '測定を追加';
+
+  // スタッフセレクター
+  const staffSel = document.getElementById('ev-staff-selector');
+  staffSel.innerHTML = staff.length === 0
+    ? '<span style="color:var(--gray-500);font-size:13px;">スタッフタブで先にスタッフを登録してください</span>'
+    : staff.map(s => `
+        <label class="staff-checkbox-label" id="ev-staff-${s.id}">
+          <input type="checkbox" value="${s.id}" onchange="toggleStaffLabel(this,'ev-staff-')">
+          ${esc(s.name)}
+        </label>
+      `).join('');
+
+  // 道具セレクター
+  const equipSel = document.getElementById('ev-equip-selector');
+  equipSel.innerHTML = EQUIPMENT_CATEGORIES.map(cat => `
+    <label class="equip-checkbox-label" id="ev-equip-${cat.id}">
+      <input type="checkbox" value="${cat.id}" onchange="toggleEquipLabel(this,'ev-equip-')">
+      ${cat.icon} ${cat.name}
+    </label>
+  `).join('');
+
+  if (id) {
+    const ev = events.find(e => e.id === id);
+    if (ev) {
+      document.getElementById('ev-date').value = ev.date;
+      document.getElementById('ev-gather').value = ev.gather || '';
+      document.getElementById('ev-start').value = ev.start || '';
+      document.getElementById('ev-end').value = ev.end || '';
+      document.getElementById('ev-location').value = ev.location;
+      document.getElementById('ev-staff-count').value = ev.staffCount || '';
+      document.getElementById('ev-note').value = ev.note || '';
+
+      (ev.staff || []).forEach(sid => {
+        const label = document.getElementById('ev-staff-' + sid);
+        if (label) {
+          label.querySelector('input').checked = true;
+          label.classList.add('selected');
+        }
+      });
+      (ev.equipment || []).forEach(eid => {
+        const label = document.getElementById('ev-equip-' + eid);
+        if (label) {
+          label.querySelector('input').checked = true;
+          label.classList.add('selected');
+        }
+      });
+    }
+  } else {
+    document.getElementById('ev-date').value = '';
+    document.getElementById('ev-gather').value = '';
+    document.getElementById('ev-start').value = '';
+    document.getElementById('ev-end').value = '';
+    document.getElementById('ev-location').value = '';
+    document.getElementById('ev-staff-count').value = '';
+    document.getElementById('ev-note').value = '';
+  }
+
+  modal.classList.add('active');
+}
+
+function closeEventModal() {
+  document.getElementById('event-modal').classList.remove('active');
+}
+
+function saveEvent() {
+  const date     = document.getElementById('ev-date').value;
+  const location = document.getElementById('ev-location').value.trim();
+  if (!date || !location) { alert('日付と場所は必須です'); return; }
+
+  const selectedStaff = [...document.querySelectorAll('#ev-staff-selector input:checked')].map(i => i.value);
+  const selectedEquip = [...document.querySelectorAll('#ev-equip-selector input:checked')].map(i => i.value);
+
+  const ev = {
+    id: editingEventId || uid(),
+    date,
+    gather:     document.getElementById('ev-gather').value,
+    start:      document.getElementById('ev-start').value,
+    end:        document.getElementById('ev-end').value,
+    location,
+    staffCount: document.getElementById('ev-staff-count').value ? Number(document.getElementById('ev-staff-count').value) : null,
+    note:       document.getElementById('ev-note').value.trim(),
+    staff:     selectedStaff,
+    equipment: selectedEquip,
+  };
+
+  if (editingEventId) {
+    events = events.map(e => e.id === editingEventId ? ev : e);
+  } else {
+    events.push(ev);
+  }
+
+  saveArr('events', events);
+  closeEventModal();
+  renderEvents();
+  showToast(editingEventId ? '測定を更新しました ✓' : '測定を追加しました ✓');
+}
+
+function removeEvent(id) {
+  if (!confirm('この測定を削除しますか？')) return;
+  events = events.filter(e => e.id !== id);
+  saveArr('events', events);
+  renderEvents();
+}
+
+// ============================================================
+// 動作確認チェック
+// ============================================================
+
+function renderChecks() {
+  const el = document.getElementById('check-list');
+  if (checks.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon">✅</div>
+      <div class="empty-state-text">動作確認チェックを追加してください</div>
+      <button class="btn btn-primary" onclick="openCheckModal()">＋ 追加する</button>
+    </div>`;
+    return;
+  }
+
+  const sorted = [...checks].sort((a, b) => a.date.localeCompare(b.date));
+  el.innerHTML = sorted.map(ck => {
+    const staffNames = (ck.staff || []).map(id => {
+      const s = staff.find(x => x.id === id);
+      return s ? s.name : '';
+    }).filter(Boolean);
+
+    const ev = events.find(e => e.id === ck.eventId);
+    const evLabel = ev ? `${formatDate(ev.date)} ${ev.location}` : '';
+
+    // 進捗計算
+    const totalItems = getAllCheckItems(ck.equipment || []);
+    const checkedCount = Object.values(ck.checkedItems || {}).filter(Boolean).length;
+    const pct = totalItems.length > 0 ? Math.round(checkedCount / totalItems.length * 100) : 0;
+    const isDone = ck.status === 'done';
+
+    return `
+      <div class="list-item">
+        <div class="list-item-header">
+          <div style="flex:1;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+              <div class="check-status-circle ${isDone ? 'done' : 'pending'}">
+                ${isDone ? '✓' : '…'}
+              </div>
+              <div>
+                <div class="list-item-title">${formatDate(ck.date)} 確認</div>
+                <div style="font-size:13px; color:var(--gray-500);">
+                  📍 ${esc(ck.location)}
+                  ${evLabel ? `　│　🗓 ${evLabel}` : ''}
+                </div>
+              </div>
+            </div>
+            ${staffNames.length > 0 ? `
+              <div class="staff-tags" style="margin-top:8px;">
+                ${staffNames.map(n => `<span class="staff-tag">👤 ${esc(n)}</span>`).join('')}
+              </div>
+            ` : ''}
+            ${totalItems.length > 0 ? `
+              <div style="margin-top:10px;">
+                <div style="font-size:12px; color:var(--gray-500); margin-bottom:4px;">
+                  ${isDone ? '完了' : `${checkedCount}/${totalItems.length} 確認済`}
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width:${pct}%; background:${isDone ? 'var(--success)' : 'var(--warning)'}"></div>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+          <div class="list-item-actions" style="flex-direction:column; align-items:flex-end; gap:6px;">
+            ${!isDone ? `<button class="btn btn-sm btn-success" onclick="openCheckRunModal('${ck.id}')">確認する</button>` : ''}
+            <div style="display:flex; gap:4px;">
+              <button class="btn-icon" onclick="openCheckModal('${ck.id}')" title="編集">✏️</button>
+              <button class="btn-icon danger" onclick="removeCheck('${ck.id}')" title="削除">🗑️</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openCheckModal(id = null) {
+  editingCheckId = id;
+  document.getElementById('check-modal-title').textContent = id ? '動作確認を編集' : '動作確認を追加';
+
+  // 測定セレクト
+  const evSel = document.getElementById('ck-event');
+  const evOptions = events
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map(ev => `<option value="${ev.id}">${formatDate(ev.date)} ${esc(ev.location)}</option>`)
+    .join('');
+  evSel.innerHTML = `<option value="">（測定を選択）</option>` + evOptions;
+
+  // スタッフ
+  const staffSel = document.getElementById('ck-staff-selector');
+  staffSel.innerHTML = staff.length === 0
+    ? '<span style="color:var(--gray-500);font-size:13px;">スタッフを登録してください</span>'
+    : staff.map(s => `
+        <label class="staff-checkbox-label" id="ck-staff-${s.id}">
+          <input type="checkbox" value="${s.id}" onchange="toggleStaffLabel(this,'ck-staff-')">
+          ${esc(s.name)}
+        </label>
+      `).join('');
+
+  // 道具
+  const equipSel = document.getElementById('ck-equip-selector');
+  equipSel.innerHTML = EQUIPMENT_CATEGORIES.map(cat => `
+    <label class="equip-checkbox-label" id="ck-equip-${cat.id}">
+      <input type="checkbox" value="${cat.id}" onchange="toggleEquipLabel(this,'ck-equip-')">
+      ${cat.icon} ${cat.name}
+    </label>
+  `).join('');
+
+  if (id) {
+    const ck = checks.find(c => c.id === id);
+    if (ck) {
+      evSel.value = ck.eventId || '';
+      document.getElementById('ck-date').value = ck.date;
+      document.getElementById('ck-location').value = ck.location;
+
+      (ck.staff || []).forEach(sid => {
+        const label = document.getElementById('ck-staff-' + sid);
+        if (label) { label.querySelector('input').checked = true; label.classList.add('selected'); }
+      });
+      (ck.equipment || []).forEach(eid => {
+        const label = document.getElementById('ck-equip-' + eid);
+        if (label) { label.querySelector('input').checked = true; label.classList.add('selected'); }
+      });
+    }
+  } else {
+    evSel.value = '';
+    document.getElementById('ck-date').value = '';
+    document.getElementById('ck-location').value = '';
+  }
+
+  document.getElementById('check-modal').classList.add('active');
+}
+
+function closeCheckModal() {
+  document.getElementById('check-modal').classList.remove('active');
+}
+
+function saveCheck() {
+  const date     = document.getElementById('ck-date').value;
+  const location = document.getElementById('ck-location').value.trim();
+  if (!date || !location) { alert('確認日と場所は必須です'); return; }
+
+  const selectedStaff = [...document.querySelectorAll('#ck-staff-selector input:checked')].map(i => i.value);
+  const selectedEquip = [...document.querySelectorAll('#ck-equip-selector input:checked')].map(i => i.value);
+
+  const existing = editingCheckId ? checks.find(c => c.id === editingCheckId) : null;
+
+  const ck = {
+    id:           editingCheckId || uid(),
+    eventId:      document.getElementById('ck-event').value,
+    date,
+    location,
+    staff:        selectedStaff,
+    equipment:    selectedEquip,
+    checkedItems: existing ? existing.checkedItems : {},
+    status:       existing ? existing.status : 'pending',
+  };
+
+  if (editingCheckId) {
+    checks = checks.map(c => c.id === editingCheckId ? ck : c);
+  } else {
+    checks.push(ck);
+  }
+
+  saveArr('checks', checks);
+  closeCheckModal();
+  renderChecks();
+  showToast(editingCheckId ? '動作確認を更新しました ✓' : '動作確認を追加しました ✓');
+}
+
+function removeCheck(id) {
+  if (!confirm('この動作確認を削除しますか？')) return;
+  checks = checks.filter(c => c.id !== id);
+  saveArr('checks', checks);
+  renderChecks();
+}
+
+// ============================================================
+// 動作確認 実施モーダル
+// ============================================================
+
+function getAllCheckItems(equipmentIds) {
+  const items = [];
+  equipmentIds.forEach(catId => {
+    const cat = EQUIPMENT_CATEGORIES.find(c => c.id === catId);
+    if (cat) {
+      cat.items.forEach(item => {
+        items.push({ key: catId + '_' + item, catName: cat.name, catIcon: cat.icon, itemName: item });
+      });
+    }
+  });
+  return items;
+}
+
+function openCheckRunModal(id) {
+  runningCheckId = id;
+  const ck = checks.find(c => c.id === id);
+  if (!ck) return;
+
+  const ev = events.find(e => e.id === ck.eventId);
+  const staffNames = (ck.staff || []).map(sid => {
+    const s = staff.find(x => x.id === sid);
+    return s ? s.name : '';
+  }).filter(Boolean);
+
+  // 情報表示
+  document.getElementById('check-run-info').innerHTML = `
+    <div style="background:var(--gray-50); border-radius:8px; padding:12px 14px;">
+      <div style="font-weight:600; margin-bottom:6px;">📋 確認情報</div>
+      <div style="font-size:13px; color:var(--gray-600); line-height:1.8;">
+        📅 ${formatDate(ck.date)}<br>
+        📍 ${esc(ck.location)}<br>
+        ${staffNames.length > 0 ? `👤 ${staffNames.map(esc).join('、')}` : ''}
+        ${ev ? `<br>🗓 関連測定: ${formatDate(ev.date)} ${esc(ev.location)}` : ''}
+      </div>
+    </div>
+  `;
+
+  const allItems = getAllCheckItems(ck.equipment || []);
+  const checkedItems = ck.checkedItems || {};
+
+  // チェックリスト描画
+  let currentCat = '';
+  const itemsHtml = allItems.map(item => {
+    let catHeader = '';
+    if (item.catName !== currentCat) {
+      currentCat = item.catName;
+      catHeader = `<div style="font-size:13px; font-weight:600; color:var(--gray-500); margin:12px 0 6px; padding-bottom:4px; border-bottom:1px solid var(--gray-200);">${item.catIcon} ${item.catName}</div>`;
+    }
+    const isChecked = !!checkedItems[item.key];
+    return catHeader + `
+      <div class="check-item ${isChecked ? 'checked' : ''}" onclick="toggleCheckItem('${item.key}', this)">
+        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="">
+        <span class="check-item-label">${item.itemName}</span>
+        ${isChecked ? '<span style="font-size:12px; color:var(--success);">✓ OK</span>' : ''}
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('check-run-items').innerHTML = itemsHtml;
+  updateRunProgress(ck.id);
+
+  document.getElementById('check-run-modal').classList.add('active');
+}
+
+function toggleCheckItem(key, el) {
+  const ck = checks.find(c => c.id === runningCheckId);
+  if (!ck) return;
+  if (!ck.checkedItems) ck.checkedItems = {};
+
+  const newVal = !ck.checkedItems[key];
+  ck.checkedItems[key] = newVal;
+
+  el.classList.toggle('checked', newVal);
+  const cb = el.querySelector('input[type="checkbox"]');
+  if (cb) cb.checked = newVal;
+
+  // OK表示更新
+  const label = el.querySelector('.check-item-label');
+  const okSpan = el.querySelector('span:last-child:not(.check-item-label)');
+  if (newVal && !okSpan) {
+    el.innerHTML = `<input type="checkbox" checked onchange=""><span class="check-item-label">${label ? label.textContent : ''}</span><span style="font-size:12px; color:var(--success);">✓ OK</span>`;
+    el.onclick = () => toggleCheckItem(key, el);
+  } else if (!newVal && okSpan) {
+    el.innerHTML = `<input type="checkbox" onchange=""><span class="check-item-label">${label ? label.textContent : ''}</span>`;
+    el.onclick = () => toggleCheckItem(key, el);
+  }
+
+  saveArr('checks', checks);
+  updateRunProgress(runningCheckId);
+}
+
+function updateRunProgress(id) {
+  const ck = checks.find(c => c.id === id);
+  if (!ck) return;
+  const allItems = getAllCheckItems(ck.equipment || []);
+  const checkedCount = Object.values(ck.checkedItems || {}).filter(Boolean).length;
+  const pct = allItems.length > 0 ? Math.round(checkedCount / allItems.length * 100) : 0;
+
+  document.getElementById('check-run-progress').style.width = pct + '%';
+  document.getElementById('check-run-progress-text').textContent =
+    `${checkedCount} / ${allItems.length} 項目確認済み（${pct}%）`;
+}
+
+function completeCheck() {
+  const ck = checks.find(c => c.id === runningCheckId);
+  if (!ck) return;
+
+  const allItems = getAllCheckItems(ck.equipment || []);
+  const checkedCount = Object.values(ck.checkedItems || {}).filter(Boolean).length;
+
+  if (checkedCount < allItems.length) {
+    if (!confirm(`未確認の項目が ${allItems.length - checkedCount} 件あります。\n完了にしてよいですか？`)) return;
+  }
+
+  ck.status = 'done';
+  saveArr('checks', checks);
+  closeCheckRunModal();
+  renderChecks();
+  showToast('動作確認を完了にしました ✓');
+}
+
+function closeCheckRunModal() {
+  document.getElementById('check-run-modal').classList.remove('active');
+  runningCheckId = null;
+}
+
+// ============================================================
+// ユーティリティ
+// ============================================================
+
+function toggleStaffLabel(input, prefix) {
+  const label = document.getElementById(prefix + input.value);
+  if (label) label.classList.toggle('selected', input.checked);
+}
+
+function toggleEquipLabel(input, prefix) {
+  const label = document.getElementById(prefix + input.value);
+  if (label) label.classList.toggle('selected', input.checked);
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+}
+
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  const days = ['日','月','火','水','木','金','土'];
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}（${days[d.getDay()]}）`;
+}
+
+// トースト通知
+let toastTimer = null;
+function showToast(msg) {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.style.cssText = `
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+      background:#1f2937; color:white; padding:10px 20px; border-radius:8px;
+      font-size:14px; font-weight:500; z-index:999; opacity:0;
+      transition:opacity 0.2s; white-space:nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+}
+
+// モーダル外クリックで閉じる
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.classList.remove('active');
+      runningCheckId = null;
+    }
+  });
+});
+
+// ============================================================
+// 初期化
+// ============================================================
+
+initFirebase();
+</script>
+</body>
+</html>
